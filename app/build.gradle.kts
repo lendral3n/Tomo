@@ -72,6 +72,9 @@ dependencies {
     implementation(project(":core:srs"))
     implementation(project(":core:content"))
 
+    implementation(project(":feature:drill"))
+    implementation(project(":feature:stats"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)

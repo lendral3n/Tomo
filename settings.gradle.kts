@@ -23,3 +23,6 @@ include(":core:design-system")
 include(":core:data")
 include(":core:srs")
 include(":core:content")
+
+include(":feature:drill")
+include(":feature:stats")

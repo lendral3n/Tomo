@@ -20,9 +20,14 @@ private const val MILLIS_PER_DAY: Long = 24L * 60 * 60 * 1000
  * in epoch millis; internal day arithmetic in floating-point days.
  */
 @Singleton
-class FsrsScheduler @Inject constructor(
-    private val params: FsrsParameters = FsrsParameters(),
-) {
+class FsrsScheduler @Inject constructor() {
+    private var params: FsrsParameters = FsrsParameters()
+
+    /** Test-only entry point that swaps the algorithm weights. */
+    internal constructor(params: FsrsParameters) : this() {
+        this.params = params
+    }
+
 
     fun review(card: FsrsCard, rating: FsrsRating, now: Long): FsrsCard {
         return when (card.state) {
