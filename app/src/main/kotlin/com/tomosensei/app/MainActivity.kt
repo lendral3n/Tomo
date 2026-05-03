@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TomoSenseiTheme {
-                TomoSenseiApp()
+                TomoSenseiAppRoot()
             }
         }
     }
@@ -48,7 +48,7 @@ private enum class TopLevelRoute(val route: String, val label: String, val icon:
 }
 
 @Composable
-private fun TomoSenseiApp() {
+private fun TomoSenseiAppRoot() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
