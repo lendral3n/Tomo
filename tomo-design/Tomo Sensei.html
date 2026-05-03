@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tomo Sensei — Design Exploration</title>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tomo-components.jsx"></script>
+<script type="text/babel" src="tomo-screens.jsx"></script>
+<script type="text/babel" src="tomo-onboarding.jsx"></script>
+<script type="text/babel" src="tomo-library.jsx"></script>
+<script type="text/babel" src="tomo-animations.jsx"></script>
+<script type="text/babel" src="tomo-extras.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #141210; font-family: 'Manrope', sans-serif; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #3a2e24; border-radius: 3px; }
+
+  /* Section label */
+  .dc-section-intro {
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #5C4A3788;
+    padding: 32px 0 0 8px;
+  }
+</style>
+</head>
+<body>
+
+<script type="text/babel">
+const { useState } = React;
+const {
+  TomoTokens,
+  WelcomeScreen, DrillScreen,
+  GateLv1, GateLv2, GateLv3, GateLv4, GateLv5, GateLv6,
+  SenseiChatScreen, FotoSenseiScreen,
+  OBCommitment, OBDeviceCheck, OBPresetPicker, OBPermission,
+  OBPinSetup, OBGatedApps, OBDailyGoal, OBModelDownload,
+  OBSimulation, OBComplete,
+  ColorPaletteGallery, TypographyGallery, ComponentsGallery, BrandGallery,
+  CardFlipAnim, HankoStampAnim, GateAppearAnim, StreakPulseAnim,
+  SettingsScreen, StatsScreen, NotificationScreen,
+  EmptyStateScreen, ErrorStateScreen, AchievementScreen,
+  DrillDarkScreen,
+} = window;
+
+// ─── TWEAKS DEFAULTS ─────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "washi",
+  "cardState": "front",
+  "chatState": "active",
+  "fotoState": "camera",
+  "showGrainTexture": true,
+  "accentColor": "#de0000",
+  "showAllGates": true
+}/*EDITMODE-END*/;
+
+// ─── PHONE WRAPPER ────────────────────────────────────────────────────────────
+function PhoneFrame({ children, label, sublabel, dark = false }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      {/* Phone shell */}
+      <div style={{
+        width: 393, height: 852,
+        borderRadius: 48,
+        background: dark ? '#0a0807' : '#1a1410',
+        boxShadow: `
+          0 0 0 1px rgba(255,255,255,0.08),
+          0 40px 100px rgba(0,0,0,0.7),
+          inset 0 1px 0 rgba(255,255,255,0.12)
+        `,
+        overflow: 'hidden',
+        position: 'relative',
+        flexShrink: 0,
+      }}>
+        {/* Dynamic island */}
+        <div style={{
+          position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
+          width: 120, height: 34,
+          background: '#000',
+          borderRadius: 20,
+          zIndex: 100,
+        }} />
+        {/* Screen content */}
+        <div style={{ width: '100%', height: '100%', borderRadius: 48, overflow: 'hidden' }}>
+          {children}
+        </div>
+      </div>
+      {/* Labels */}
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: 13,
+          color: '#F5ECD9cc', letterSpacing: '0.04em',
+        }}>{label}</div>
+        {sublabel && (
+          <div style={{
+            fontFamily: 'Manrope, sans-serif', fontWeight: 400, fontSize: 11,
+            color: '#8B6F4788', marginTop: 3, letterSpacing: '0.06em',
+          }}>{sublabel}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  const isDrillFlipped = tweaks.cardState === 'back';
+  const isChatActive = tweaks.chatState === 'active';
+  const fotoState = tweaks.fotoState;
+
+  return (
+    <>
+    <DesignCanvas>
+
+      {/* ── ROW 1: Onboarding + Core Screens ── */}
+      <DCSection id="core" title="Core Screens">
+
+        <DCArtboard id="welcome" label="Welcome" width={393} height={852}>
+          <WelcomeScreen />
+        </DCArtboard>
+
+        <DCArtboard id="drill-front" label="Home · Card Front" width={393} height={852}>
+          <DrillScreen flipped={false} />
+        </DCArtboard>
+
+        <DCArtboard id="drill-back" label="Home · Card Flipped" width={393} height={852}>
+          <DrillScreen flipped={true} />
+        </DCArtboard>
+
+        <DCArtboard id="chat-empty" label="Sensei Chat · Idle" width={393} height={852}>
+          <SenseiChatScreen active={false} />
+        </DCArtboard>
+
+        <DCArtboard id="chat-active" label="Sensei Chat · Active" width={393} height={852}>
+          <SenseiChatScreen active={true} />
+        </DCArtboard>
+
+        <DCArtboard id="foto" label="Foto Sensei · Results" width={393} height={852}>
+          <FotoSenseiScreen state="results" />
+        </DCArtboard>
+
+        <DCArtboard id="foto-camera" label="Foto Sensei · Camera" width={393} height={852}>
+          <FotoSenseiScreen state="camera" />
+        </DCArtboard>
+
+      </DCSection>
+
+      {/* ── ROW 2: Gate Overlays ── */}
+      <DCSection id="gates" title="Gate Overlays — 6 Intensity Levels">
+
+        <DCArtboard id="gate-1" label="Lv 1 · Whisper" width={393} height={852}>
+          <GateLv1 />
+        </DCArtboard>
+
+        <DCArtboard id="gate-2" label="Lv 2 · Tap to Pass" width={393} height={852}>
+          <GateLv2 />
+        </DCArtboard>
+
+        <DCArtboard id="gate-3" label="Lv 3 · Answer to Pass" width={393} height={852}>
+          <GateLv3 />
+        </DCArtboard>
+
+        <DCArtboard id="gate-4" label="Lv 4 · Correct to Pass" width={393} height={852}>
+          <GateLv4 />
+        </DCArtboard>
+
+        <DCArtboard id="gate-5" label="Lv 5 · Timeout Lock" width={393} height={852}>
+          <GateLv5 />
+        </DCArtboard>
+
+        <DCArtboard id="gate-6" label="Lv 6 · Hardcore Lock" width={393} height={852}>
+          <GateLv6 />
+        </DCArtboard>
+
+      </DCSection>
+
+      {/* ── ROW 3: Onboarding Flow (10 screens) ── */}
+      <DCSection id="onboarding" title="Onboarding Flow — 10 Screens">
+        <DCArtboard id="ob-2" label="02 · Commitment" width={393} height={852}>
+          <OBCommitment />
+        </DCArtboard>
+        <DCArtboard id="ob-3" label="03 · Device Check" width={393} height={852}>
+          <OBDeviceCheck />
+        </DCArtboard>
+        <DCArtboard id="ob-4" label="04 · Preset Picker" width={393} height={852}>
+          <OBPresetPicker />
+        </DCArtboard>
+        <DCArtboard id="ob-5" label="05 · Permission" width={393} height={852}>
+          <OBPermission />
+        </DCArtboard>
+        <DCArtboard id="ob-6" label="06 · PIN Setup" width={393} height={852}>
+          <OBPinSetup />
+        </DCArtboard>
+        <DCArtboard id="ob-7" label="07 · Gated Apps" width={393} height={852}>
+          <OBGatedApps />
+        </DCArtboard>
+        <DCArtboard id="ob-8" label="08 · Daily Goal" width={393} height={852}>
+          <OBDailyGoal />
+        </DCArtboard>
+        <DCArtboard id="ob-9" label="09 · Model Download" width={393} height={852}>
+          <OBModelDownload />
+        </DCArtboard>
+        <DCArtboard id="ob-10" label="10 · Simulation" width={393} height={852}>
+          <OBSimulation />
+        </DCArtboard>
+        <DCArtboard id="ob-11" label="11 · Complete" width={393} height={852}>
+          <OBComplete />
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── ROW 4: Component Library ── */}
+      <DCSection id="library" title="Design System — Library">
+        <DCArtboard id="lib-color" label="Color Palette" width={393} height={852}>
+          <ColorPaletteGallery />
+        </DCArtboard>
+        <DCArtboard id="lib-type" label="Typography" width={393} height={852}>
+          <TypographyGallery />
+        </DCArtboard>
+        <DCArtboard id="lib-comp" label="Components" width={393} height={852}>
+          <ComponentsGallery />
+        </DCArtboard>
+        <DCArtboard id="lib-brand" label="Brand" width={393} height={852}>
+          <BrandGallery />
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── ROW 5: Animations ── */}
+      <DCSection id="animations" title="Animations — Auto-loop">
+        <DCArtboard id="anim-flip" label="Card Flip" width={393} height={852}>
+          <CardFlipAnim />
+        </DCArtboard>
+        <DCArtboard id="anim-hanko" label="Hanko Stamp Drop" width={393} height={852}>
+          <HankoStampAnim />
+        </DCArtboard>
+        <DCArtboard id="anim-gate" label="Gate Appearance" width={393} height={852}>
+          <GateAppearAnim />
+        </DCArtboard>
+        <DCArtboard id="anim-streak" label="Streak Pulse" width={393} height={852}>
+          <StreakPulseAnim />
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── ROW 6: App Screens (Settings, Stats, Notif) ── */}
+      <DCSection id="appscreens" title="App Screens — Settings · Stats · Notif">
+        <DCArtboard id="settings" label="Settings" width={393} height={852}>
+          <SettingsScreen />
+        </DCArtboard>
+        <DCArtboard id="stats" label="Stats / Progress" width={393} height={852}>
+          <StatsScreen />
+        </DCArtboard>
+        <DCArtboard id="notif" label="Notification (Lock Screen)" width={393} height={852}>
+          <NotificationScreen />
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── ROW 7: States + Dark Mode ── */}
+      <DCSection id="states" title="Edge States + Dark Mode">
+        <DCArtboard id="empty" label="Empty · Done for the day" width={393} height={852}>
+          <EmptyStateScreen />
+        </DCArtboard>
+        <DCArtboard id="error" label="Error · Permission Denied" width={393} height={852}>
+          <ErrorStateScreen />
+        </DCArtboard>
+        <DCArtboard id="achievement" label="Achievement · 50-day" width={393} height={852}>
+          <AchievementScreen />
+        </DCArtboard>
+        <DCArtboard id="drill-dark" label="Home · Dark Mode" width={393} height={852}>
+          <DrillDarkScreen />
+        </DCArtboard>
+      </DCSection>
+
+    </DesignCanvas>
+
+    {/* ── TWEAKS PANEL ── */}
+    <TweaksPanel>
+      <TweakSection label="Drill Screen">
+        <TweakRadio
+          id="cardState"
+          label="Card state"
+          options={[{value:'front',label:'Front'},{value:'back',label:'Flipped'}]}
+          value={tweaks.cardState}
+          onChange={v => setTweak('cardState', v)}
+        />
+      </TweakSection>
+      <TweakSection label="Chat Screen">
+        <TweakRadio
+          id="chatState"
+          label="Chat state"
+          options={[{value:'empty',label:'Idle'},{value:'active',label:'Active'}]}
+          value={tweaks.chatState}
+          onChange={v => setTweak('chatState', v)}
+        />
+      </TweakSection>
+      <TweakSection label="Foto Sensei">
+        <TweakRadio
+          id="fotoState"
+          label="Screen state"
+          options={[{value:'camera',label:'Camera'},{value:'results',label:'Results'}]}
+          value={tweaks.fotoState}
+          onChange={v => setTweak('fotoState', v)}
+        />
+      </TweakSection>
+      <TweakSection label="Visual">
+        <TweakColor
+          id="accentColor"
+          label="Hanko red"
+          value={tweaks.accentColor}
+          onChange={v => setTweak('accentColor', v)}
+        />
+        <TweakToggle
+          id="showGrainTexture"
+          label="Grain texture"
+          value={tweaks.showGrainTexture}
+          onChange={v => setTweak('showGrainTexture', v)}
+        />
+      </TweakSection>
+    </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<div id="root"></div>
+</body>
+</html>
