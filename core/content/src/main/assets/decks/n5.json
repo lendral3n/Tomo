@@ -1,0 +1,99 @@
+{
+  "version": "0.1.0-dummy",
+  "level": "N5",
+  "language": "ja",
+  "interface_lang": "id",
+  "card_count": 5,
+  "cards": [
+    {
+      "id": "n5_v_001",
+      "type": "vocab",
+      "front": "食べる",
+      "reading": "たべる",
+      "meaning": "makan",
+      "examples": [
+        {
+          "jp": "私はりんごを食べます。",
+          "reading": "わたしはりんごをたべます。",
+          "id": "Saya makan apel."
+        },
+        {
+          "jp": "何を食べたいですか？",
+          "reading": "なにをたべたいですか？",
+          "id": "Mau makan apa?"
+        }
+      ],
+      "tags": ["verb", "ichidan", "daily", "food"],
+      "mnemonic": null
+    },
+    {
+      "id": "n5_v_002",
+      "type": "vocab",
+      "front": "飲む",
+      "reading": "のむ",
+      "meaning": "minum",
+      "examples": [
+        {
+          "jp": "水を飲みます。",
+          "reading": "みずをのみます。",
+          "id": "Minum air."
+        }
+      ],
+      "tags": ["verb", "godan", "daily"],
+      "mnemonic": null
+    },
+    {
+      "id": "n5_v_003",
+      "type": "vocab",
+      "front": "本",
+      "reading": "ほん",
+      "meaning": "buku",
+      "examples": [
+        {
+          "jp": "これは本です。",
+          "reading": "これはほんです。",
+          "id": "Ini adalah buku."
+        }
+      ],
+      "tags": ["noun", "school", "daily"],
+      "mnemonic": null
+    },
+    {
+      "id": "n5_v_004",
+      "type": "vocab",
+      "front": "学校",
+      "reading": "がっこう",
+      "meaning": "sekolah",
+      "examples": [
+        {
+          "jp": "学校に行きます。",
+          "reading": "がっこうにいきます。",
+          "id": "Pergi ke sekolah."
+        }
+      ],
+      "tags": ["noun", "school", "daily"],
+      "mnemonic": null
+    },
+    {
+      "id": "n5_g_001",
+      "type": "grammar",
+      "front": "〜は〜です",
+      "reading": "",
+      "meaning": "X adalah Y (basic copula)",
+      "examples": [
+        {
+          "jp": "私は学生です。",
+          "reading": "わたしはがくせいです。",
+          "id": "Saya adalah pelajar."
+        },
+        {
+          "jp": "これは本です。",
+          "reading": "これはほんです。",
+          "id": "Ini adalah buku."
+        }
+      ],
+      "tags": ["copula", "basic", "structure"],
+      "mnemonic": null
+    }
+  ]
+}

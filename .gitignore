@@ -1,0 +1,13 @@
+.gradle/
+build/
+.idea/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+.DS_Store
+*.hprof
+out/
+.design-canvas.state.json
