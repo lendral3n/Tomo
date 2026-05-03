@@ -8,6 +8,8 @@ captures/
 .cxx/
 .kotlin/
 .DS_Store
+# Keep Room schema dumps committed for migration testing
+!**/schemas/
 *.hprof
 out/
 .design-canvas.state.json
