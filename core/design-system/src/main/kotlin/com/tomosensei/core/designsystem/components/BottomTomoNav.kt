@@ -38,7 +38,7 @@ data class TomoNavItem(
 
 val DefaultTomoNav: List<TomoNavItem> = listOf(
     TomoNavItem("drill", "練", "Drill", enabled = true),
-    TomoNavItem("chat", "会", "Chat", enabled = false),
+    TomoNavItem("chat", "会", "Chat", enabled = true),
     TomoNavItem("photo", "撮", "Foto", enabled = false),
     TomoNavItem("stats", "塾", "Stats", enabled = true),
     TomoNavItem("settings", "設", "Atur", enabled = true),
