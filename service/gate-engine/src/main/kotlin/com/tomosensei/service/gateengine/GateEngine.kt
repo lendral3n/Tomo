@@ -50,17 +50,18 @@ class GateEngine @Inject constructor(
         if (!cooldown.isPast(trigger, cooldownSeconds)) return null
 
         val now = clock.nowMillis()
-        val due = progressRepository.nextDue(now)
-            ?: cardRepository.observeByLevel("N5")
+
+        // Prefer the next FSRS-due card; fall back to the first seeded N5
+        // entry if no progress rows exist yet (cold-launch / fresh install).
+        val nextDue = progressRepository.nextDue(now)
+        val card = if (nextDue != null) {
+            cardRepository.getById(nextDue.cardId) ?: return null
+        } else {
+            cardRepository.observeByLevel("N5")
                 .filter { it.isNotEmpty() }
                 .first()
-                .firstOrNull()
-                ?.let { card ->
-                    progressRepository.fsrsCard(card.id, now)
-                }
-            ?: return null
-
-        val card = cardRepository.getById(due.cardId) ?: return null
+                .firstOrNull() ?: return null
+        }
 
         cooldown.mark(trigger)
         gateLogDao.insert(
