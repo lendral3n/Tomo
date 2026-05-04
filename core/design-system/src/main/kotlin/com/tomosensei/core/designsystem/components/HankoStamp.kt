@@ -1,60 +1,66 @@
 package com.tomosensei.core.designsystem.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.Canvas
-import androidx.compose.material3.Text
 import com.tomosensei.core.designsystem.theme.HankoRed
+import com.tomosensei.core.designsystem.theme.ShipporiMincho
+import com.tomosensei.core.designsystem.theme.WashiCreamLight
+
+enum class HankoSize(
+    val fontSize: Int,
+    val padX: Int,
+    val padY: Int,
+    val border: Float,
+) {
+    Sm(fontSize = 10, padX = 8, padY = 4, border = 1.5f),
+    Md(fontSize = 13, padX = 11, padY = 7, border = 2f),
+    Lg(fontSize = 17, padX = 14, padY = 10, border = 2f),
+}
 
 /**
- * Square red seal with a single Japanese character. Inspired by the
- * HankoStampAnim block in tomo-animations.jsx — slightly rotated,
- * imperfect edges via stroke variance.
+ * Filled red seal — text in washi cream on hanko red background, slight
+ * rotation, soft shadow. Mirrors HankoStamp in tomo-components.jsx.
  */
 @Composable
 fun HankoStamp(
-    character: String,
+    text: String,
     modifier: Modifier = Modifier,
-    size: Dp = 64.dp,
+    size: HankoSize = HankoSize.Md,
     color: Color = HankoRed,
-    rotationDegrees: Float = -6f,
+    rotationDegrees: Float = -8f,
 ) {
     Box(
         modifier = modifier
-            .size(size)
-            .rotate(rotationDegrees),
+            .rotate(rotationDegrees)
+            .shadow(2.dp, RoundedCornerShape(3.dp))
+            .background(color, RoundedCornerShape(3.dp))
+            .border(size.border.dp, WashiCreamLight.copy(alpha = 0.35f), RoundedCornerShape(3.dp))
+            .padding(horizontal = size.padX.dp, vertical = size.padY.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.size(size)) {
-            val inset = this.size.width * 0.06f
-            drawRect(
-                color = color,
-                topLeft = Offset(inset, inset),
-                size = androidx.compose.ui.geometry.Size(
-                    width = this.size.width - inset * 2f,
-                    height = this.size.height - inset * 2f,
-                ),
-                style = Stroke(width = this.size.width * 0.08f),
-            )
-        }
         Text(
-            text = character,
-            color = color,
+            text = text,
             style = TextStyle(
-                fontWeight = FontWeight.W700,
-                fontSize = (size.value * 0.55f).sp,
+                fontFamily = ShipporiMincho,
+                fontWeight = FontWeight.W800,
+                fontSize = size.fontSize.sp,
+                letterSpacing = (size.fontSize * 0.12f).sp,
+                color = WashiCreamLight,
             ),
         )
     }

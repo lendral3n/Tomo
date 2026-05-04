@@ -30,6 +30,7 @@ private val provider = GoogleFont.Provider(
 private val shipporiMinchoFont = GoogleFont("Shippori Mincho")
 private val zenKakuGothicFont = GoogleFont("Zen Kaku Gothic Antique")
 private val manropeFont = GoogleFont("Manrope")
+private val jetBrainsMonoFont = GoogleFont("JetBrains Mono")
 
 val ShipporiMincho: FontFamily = FontFamily(
     Font(googleFont = shipporiMinchoFont, fontProvider = provider, weight = FontWeight.W400),
@@ -53,6 +54,11 @@ val Manrope: FontFamily = FontFamily(
     Font(googleFont = manropeFont, fontProvider = provider, weight = FontWeight.W600),
     Font(googleFont = manropeFont, fontProvider = provider, weight = FontWeight.W700),
     Font(googleFont = manropeFont, fontProvider = provider, weight = FontWeight.W800),
+)
+
+val JetBrainsMono: FontFamily = FontFamily(
+    Font(googleFont = jetBrainsMonoFont, fontProvider = provider, weight = FontWeight.W400),
+    Font(googleFont = jetBrainsMonoFont, fontProvider = provider, weight = FontWeight.W600),
 )
 
 @Suppress("unused") // Reference for the Compose preview tooling that doesn't resolve GoogleFont
