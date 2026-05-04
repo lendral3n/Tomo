@@ -24,6 +24,7 @@ import com.tomosensei.core.designsystem.components.DefaultTomoNav
 import com.tomosensei.core.designsystem.theme.TomoSenseiTheme
 import com.tomosensei.core.designsystem.theme.WashiCream
 import com.tomosensei.app.ui.SettingsScreen
+import com.tomosensei.feature.chat.ui.ChatScreen
 import com.tomosensei.feature.drill.ui.DrillScreen
 import com.tomosensei.feature.stats.ui.StatsScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -91,6 +92,7 @@ private fun TomoNavHost(
         modifier = modifier,
     ) {
         composable("drill") { DrillScreen() }
+        composable("chat") { ChatScreen() }
         composable("stats") { StatsScreen() }
         composable("settings") { SettingsScreen() }
     }

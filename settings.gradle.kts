@@ -26,6 +26,9 @@ include(":core:content")
 
 include(":feature:drill")
 include(":feature:stats")
+include(":feature:chat")
+
+include(":core:ai")
 
 include(":service:gate-engine")
 include(":service:overlay")
