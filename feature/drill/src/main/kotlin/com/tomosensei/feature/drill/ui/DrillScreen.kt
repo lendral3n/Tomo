@@ -1,5 +1,15 @@
 package com.tomosensei.feature.drill.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -18,10 +28,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +48,7 @@ import com.tomosensei.core.designsystem.theme.HankoRed
 import com.tomosensei.core.designsystem.theme.JetBrainsMono
 import com.tomosensei.core.designsystem.theme.Manrope
 import com.tomosensei.core.designsystem.theme.ShipporiMincho
+import com.tomosensei.core.designsystem.theme.SuccessMoss
 import com.tomosensei.core.designsystem.theme.SumiBlack
 import com.tomosensei.core.designsystem.theme.SumiDark
 import com.tomosensei.core.designsystem.theme.SumiLight
@@ -45,8 +56,12 @@ import com.tomosensei.core.designsystem.theme.WashiCream
 import com.tomosensei.feature.drill.DrillViewModel
 import com.tomosensei.feature.drill.model.DrillUiState
 import com.tomosensei.feature.drill.rememberJapaneseTts
+import kotlin.math.abs
+import kotlinx.coroutines.launch
 
-private const val SWIPE_DISMISS_THRESHOLD_PX = 280f
+private const val SWIPE_DISMISS_THRESHOLD_PX = 220f
+private const val SWIPE_FLY_OFF_PX = 1600f
+private const val SWIPE_TILT_FACTOR = 0.025f
 
 @Composable
 fun DrillScreen(
@@ -69,18 +84,38 @@ fun DrillScreen(
                     .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                when (val s = state) {
-                    DrillUiState.Loading -> CircularProgressIndicator(color = HankoRed)
-                    DrillUiState.Empty -> EmptyContent()
-                    is DrillUiState.Ready -> ReadyContent(
-                        state = s,
-                        onTap = { viewModel.onTapFlip() },
-                        onAnswer = viewModel::onAnswer,
-                        onSpeak = { tts.speak(s.current.front) },
-                    )
+                AnimatedContent(
+                    targetState = state,
+                    transitionSpec = {
+                        (fadeIn(tween(300)) + slideInVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow,
+                            ),
+                            initialOffsetY = { it / 4 },
+                        )).togetherWith(fadeOut(tween(180)))
+                    },
+                    contentKey = { s ->
+                        when (s) {
+                            DrillUiState.Loading -> "loading"
+                            DrillUiState.Empty -> "empty"
+                            is DrillUiState.Ready -> s.current.id
+                        }
+                    },
+                    label = "drill-content",
+                ) { s ->
+                    when (s) {
+                        DrillUiState.Loading -> CircularProgressIndicator(color = HankoRed)
+                        DrillUiState.Empty -> EmptyContent()
+                        is DrillUiState.Ready -> ReadyContent(
+                            state = s,
+                            onTap = { viewModel.onTapFlip() },
+                            onAnswer = viewModel::onAnswer,
+                            onSpeak = { tts.speak(s.current.front) },
+                        )
+                    }
                 }
             }
-            // Bottom space reserved for nav bar; actual nav lives in app shell.
             Spacer(Modifier.height(80.dp))
         }
     }
@@ -138,7 +173,13 @@ private fun ReadyContent(
     onAnswer: (Boolean) -> Unit,
     onSpeak: () -> Unit,
 ) {
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    val offsetY = remember(state.current.id) { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(state.current.id) {
+        // Subtle settle when a brand new card lands.
+        offsetY.snapTo(0f)
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -147,21 +188,52 @@ private fun ReadyContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .graphicsLayer { translationY = dragOffsetY }
+                .graphicsLayer {
+                    translationY = offsetY.value
+                    rotationZ = offsetY.value * SWIPE_TILT_FACTOR
+                    val progress = (abs(offsetY.value) / SWIPE_FLY_OFF_PX).coerceIn(0f, 1f)
+                    alpha = 1f - progress * 0.4f
+                }
                 .pointerInput(state.current.id) {
                     detectTapGestures(onTap = { onTap() })
                 }
                 .pointerInput(state.current.id) {
                     detectVerticalDragGestures(
                         onDragEnd = {
-                            when {
-                                dragOffsetY < -SWIPE_DISMISS_THRESHOLD_PX -> onAnswer(true)
-                                dragOffsetY > SWIPE_DISMISS_THRESHOLD_PX -> onAnswer(false)
+                            scope.launch {
+                                when {
+                                    offsetY.value < -SWIPE_DISMISS_THRESHOLD_PX -> {
+                                        offsetY.animateTo(
+                                            targetValue = -SWIPE_FLY_OFF_PX,
+                                            animationSpec = tween(280, easing = EaseOutCubic),
+                                        )
+                                        onAnswer(true)
+                                    }
+                                    offsetY.value > SWIPE_DISMISS_THRESHOLD_PX -> {
+                                        offsetY.animateTo(
+                                            targetValue = SWIPE_FLY_OFF_PX,
+                                            animationSpec = tween(280, easing = EaseOutCubic),
+                                        )
+                                        onAnswer(false)
+                                    }
+                                    else -> offsetY.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow,
+                                        ),
+                                    )
+                                }
                             }
-                            dragOffsetY = 0f
                         },
-                        onDragCancel = { dragOffsetY = 0f },
-                        onVerticalDrag = { _, dragAmount -> dragOffsetY += dragAmount },
+                        onDragCancel = {
+                            scope.launch {
+                                offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+                            }
+                        },
+                        onVerticalDrag = { _, dragAmount ->
+                            scope.launch { offsetY.snapTo(offsetY.value + dragAmount) }
+                        },
                     )
                 },
         ) {
@@ -171,6 +243,7 @@ private fun ReadyContent(
                 position = state.position,
                 total = state.total,
                 onSpeak = onSpeak,
+                swipeProgress = (offsetY.value / SWIPE_DISMISS_THRESHOLD_PX).coerceIn(-1.5f, 1.5f),
             )
         }
         if (!state.flipped) {
@@ -182,15 +255,13 @@ private fun ReadyContent(
 
 @Composable
 private fun SwipeHints() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(28.dp),
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
         Text(
             text = "↑ tau",
             style = MaterialTheme.typography.labelLarge.copy(
                 fontFamily = Manrope,
                 fontWeight = FontWeight.W600,
-                color = com.tomosensei.core.designsystem.theme.SuccessMoss,
+                color = SuccessMoss,
                 fontSize = 12.sp,
             ),
         )

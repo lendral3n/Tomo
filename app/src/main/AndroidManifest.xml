@@ -35,5 +35,18 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name="com.tomosensei.service.gateengine.GateForegroundService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="user-initiated learning gates" />
+        </service>
+
+        <service
+            android:name="com.tomosensei.service.overlay.GateOverlayService"
+            android:exported="false" />
+
     </application>
 </manifest>

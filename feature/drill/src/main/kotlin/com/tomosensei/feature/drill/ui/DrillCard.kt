@@ -1,6 +1,8 @@
 package com.tomosensei.feature.drill.ui
 
+import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +40,7 @@ import com.tomosensei.core.designsystem.theme.SumiDark
 import com.tomosensei.core.designsystem.theme.SumiLight
 import com.tomosensei.core.designsystem.theme.SumiMid
 import com.tomosensei.core.designsystem.theme.WashiCreamDark
+import com.tomosensei.core.designsystem.theme.WashiCreamLight
 import com.tomosensei.core.designsystem.theme.ZenKakuGothic
 import com.tomosensei.feature.drill.model.DrillCardUi
 
@@ -49,19 +52,36 @@ fun DrillCard(
     total: Int,
     onSpeak: () -> Unit,
     modifier: Modifier = Modifier,
+    swipeProgress: Float = 0f,
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (flipped) 180f else 0f,
+        animationSpec = tween(durationMillis = 520, easing = EaseInOutCubic),
         label = "drill-card-flip",
+    )
+    // Subtle scale dip mid-flip — prevents the card from feeling like a flat
+    // sticker rotating, gives it a touch of depth.
+    val scale by animateFloatAsState(
+        targetValue = if (rotation in 30f..150f) 0.95f else 1f,
+        animationSpec = tween(durationMillis = 260, easing = EaseInOutCubic),
+        label = "drill-card-scale",
     )
     Box(
         modifier = modifier.graphicsLayer {
             rotationY = rotation
-            cameraDistance = 12f * density
+            scaleX = scale
+            scaleY = scale
+            cameraDistance = 14f * density
         },
     ) {
         if (rotation <= 90f) {
-            DrillCardFront(card = card, position = position, total = total, onSpeak = onSpeak)
+            DrillCardFront(
+                card = card,
+                position = position,
+                total = total,
+                onSpeak = onSpeak,
+                swipeProgress = swipeProgress,
+            )
         } else {
             Box(modifier = Modifier.graphicsLayer { rotationY = 180f }) {
                 DrillCardBack(card = card, position = position, total = total)
@@ -76,8 +96,18 @@ private fun DrillCardFront(
     position: Int,
     total: Int,
     onSpeak: () -> Unit,
+    swipeProgress: Float,
 ) {
-    WashiCard(modifier = Modifier.fillMaxWidth()) {
+    val tint = when {
+        swipeProgress < -0.2f -> SuccessMoss.copy(
+            alpha = (-swipeProgress * 0.10f).coerceIn(0f, 0.12f),
+        )
+        swipeProgress > 0.2f -> HankoRed.copy(
+            alpha = (swipeProgress * 0.10f).coerceIn(0f, 0.12f),
+        )
+        else -> WashiCreamLight
+    }
+    WashiCard(modifier = Modifier.fillMaxWidth(), tone = tint) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(20.dp),

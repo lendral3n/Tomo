@@ -75,6 +75,9 @@ dependencies {
     implementation(project(":feature:drill"))
     implementation(project(":feature:stats"))
 
+    implementation(project(":service:gate-engine"))
+    implementation(project(":service:overlay"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
