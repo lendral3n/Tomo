@@ -8,5 +8,7 @@ sealed interface DrillUiState {
         val flipped: Boolean = false,
         val reviewedToday: Int = 0,
         val streakDays: Int = 0,
+        val position: Int = 1,
+        val total: Int = 1,
     ) : DrillUiState
 }

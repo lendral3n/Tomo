@@ -17,6 +17,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -34,6 +35,8 @@ class DrillViewModel @Inject constructor(
     val state: StateFlow<DrillUiState> = _state.asStateFlow()
 
     private var queue: ArrayDeque<CardEntity> = ArrayDeque()
+    private var sessionTotal: Int = 0
+    private var positionInSession: Int = 0
 
     init {
         viewModelScope.launch { refillQueue() }
@@ -58,28 +61,34 @@ class DrillViewModel @Inject constructor(
 
     private suspend fun advanceQueue() {
         if (queue.isNotEmpty()) queue.removeFirst()
-        if (queue.isEmpty()) refillQueue() else publishHead()
+        positionInSession += 1
+        if (queue.isEmpty()) {
+            _state.value = DrillUiState.Empty
+        } else {
+            publishHead()
+        }
     }
 
     private suspend fun refillQueue() {
-        val all = cardRepository.observeByLevel("N5").first()
-        if (all.isEmpty()) {
-            _state.value = DrillUiState.Empty
-            return
-        }
+        // Wait until DeckSeeder finishes populating the cards table on first
+        // launch — observeByLevel emits [] before the seed completes, and a
+        // bare .first() would lock us into the empty state forever.
+        val all = cardRepository.observeByLevel("N5")
+            .filter { it.isNotEmpty() }
+            .first()
         val now = clock.nowMillis()
-        // Order cards by FSRS due time; new cards (no row) sort to front.
         val ordered = all
             .map { card -> card to (progressRepository.get(card.id)?.due ?: 0L) }
             .sortedBy { it.second }
             .map { it.first }
         queue = ArrayDeque(ordered)
+        sessionTotal = ordered.size
+        positionInSession = 0
         publishHead()
     }
 
     private suspend fun publishHead() {
-        val head = queue.firstOrNull()
-        if (head == null) {
+        val head = queue.firstOrNull() ?: run {
             _state.value = DrillUiState.Empty
             return
         }
@@ -89,20 +98,19 @@ class DrillViewModel @Inject constructor(
             flipped = false,
             reviewedToday = stats?.totalReviews ?: 0,
             streakDays = stats?.streak ?: 0,
+            position = positionInSession + 1,
+            total = sessionTotal,
         )
     }
 
-    private fun CardEntity.toUi(): DrillCardUi {
-        val examples = parseExamples(this.examples)
-        return DrillCardUi(
-            id = id,
-            front = front,
-            reading = reading,
-            meaning = meaning,
-            type = type,
-            examples = examples,
-        )
-    }
+    private fun CardEntity.toUi(): DrillCardUi = DrillCardUi(
+        id = id,
+        front = front,
+        reading = reading,
+        meaning = meaning,
+        type = type,
+        examples = parseExamples(this.examples),
+    )
 
     private fun parseExamples(json: String): List<DrillExampleUi> {
         if (json.isBlank()) return emptyList()

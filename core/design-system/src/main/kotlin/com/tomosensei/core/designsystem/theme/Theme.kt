@@ -54,7 +54,9 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun TomoSenseiTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    // Tomo Sensei is intentionally light-only at v0. The washi-paper aesthetic
+    // is the design's primary mode; gate overlays use the dark palette inline.
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColors else LightColors
