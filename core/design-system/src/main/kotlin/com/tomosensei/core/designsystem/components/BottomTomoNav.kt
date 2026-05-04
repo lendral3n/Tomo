@@ -41,7 +41,7 @@ val DefaultTomoNav: List<TomoNavItem> = listOf(
     TomoNavItem("chat", "会", "Chat", enabled = false),
     TomoNavItem("photo", "撮", "Foto", enabled = false),
     TomoNavItem("stats", "塾", "Stats", enabled = true),
-    TomoNavItem("settings", "設", "Atur", enabled = false),
+    TomoNavItem("settings", "設", "Atur", enabled = true),
 )
 
 @Composable

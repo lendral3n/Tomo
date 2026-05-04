@@ -26,3 +26,6 @@ include(":core:content")
 
 include(":feature:drill")
 include(":feature:stats")
+
+include(":service:gate-engine")
+include(":service:overlay")
