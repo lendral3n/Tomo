@@ -27,6 +27,7 @@ include(":core:content")
 include(":feature:drill")
 include(":feature:stats")
 include(":feature:chat")
+include(":feature:onboarding")
 
 include(":core:ai")
 
