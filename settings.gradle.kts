@@ -28,6 +28,7 @@ include(":feature:drill")
 include(":feature:stats")
 include(":feature:chat")
 include(":feature:onboarding")
+include(":feature:photo")
 
 include(":core:ai")
 

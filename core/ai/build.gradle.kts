@@ -35,10 +35,9 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
 
-    // LiteRT-LM / MediaPipe — surfaced through libs.versions.toml. The
-    // actual inference call site is GemmaInferenceManager; until the
-    // library is wired, the stub implementation in this module satisfies
-    // the interface so :feature:chat can build and run end-to-end.
-    // implementation(libs.google.ai.edge.litertlm)
-    // implementation(libs.mediapipe.tasks.genai)
+    // MediaPipe Tasks GenAI — wraps the LiteRT-LM runtime that runs
+    // Gemma 4 E4B on-device. Confirmed against the patterns in
+    // google-ai-edge/gallery; the dep version may need to bump as
+    // Google ships new Gemma support.
+    implementation(libs.mediapipe.tasks.genai)
 }

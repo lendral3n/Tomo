@@ -76,6 +76,7 @@ dependencies {
     implementation(project(":feature:stats"))
     implementation(project(":feature:chat"))
     implementation(project(":feature:onboarding"))
+    implementation(project(":feature:photo"))
 
     implementation(project(":service:gate-engine"))
     implementation(project(":service:overlay"))
