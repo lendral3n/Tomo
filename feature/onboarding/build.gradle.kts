@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:design-system"))
     implementation(project(":core:data"))
+    implementation(project(":core:ai"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

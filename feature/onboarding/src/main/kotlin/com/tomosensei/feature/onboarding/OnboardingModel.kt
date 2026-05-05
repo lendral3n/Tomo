@@ -18,6 +18,12 @@ data class OnboardingProgress(
     val dailyGoal: Int = 15,
     val deviceCheckPassed: Boolean = true,
     val pinError: String? = null,
+    val deviceCheck: DeviceCheckResult? = null,
+    val gatedApps: Set<String> = setOf(
+        "com.zhiliaoapp.musically", // TikTok
+        "com.instagram.android",
+        "com.google.android.youtube",
+    ),
 )
 
 object PinHasher {

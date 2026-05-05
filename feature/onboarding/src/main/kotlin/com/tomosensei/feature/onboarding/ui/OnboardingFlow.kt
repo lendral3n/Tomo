@@ -57,11 +57,12 @@ import com.tomosensei.core.designsystem.theme.SumiDark
 import com.tomosensei.core.designsystem.theme.SumiLight
 import com.tomosensei.core.designsystem.theme.SumiMid
 import com.tomosensei.core.designsystem.theme.WashiCreamLight
+import com.tomosensei.feature.onboarding.DeviceCheckResult
 import com.tomosensei.feature.onboarding.OnboardingProgress
 import com.tomosensei.feature.onboarding.OnboardingViewModel
 import com.tomosensei.feature.onboarding.Preset
 
-private const val TOTAL_STEPS = 7
+private const val TOTAL_STEPS = 11
 
 @Composable
 fun OnboardingFlow(
@@ -87,12 +88,16 @@ fun OnboardingFlow(
                 Box(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
                     when (step) {
                         0 -> WelcomeStep()
-                        1 -> CommitmentStep()
-                        2 -> PresetStep(state, viewModel::selectPreset)
-                        3 -> PermissionStep()
-                        4 -> PinStep(state, viewModel::setPin, viewModel::setPinConfirm)
-                        5 -> DailyGoalStep(state, viewModel::setDailyGoal)
-                        6 -> DoneStep()
+                        1 -> DeviceCheckStep(state)
+                        2 -> CommitmentStep()
+                        3 -> PresetStep(state, viewModel::selectPreset)
+                        4 -> PermissionStep()
+                        5 -> GatedAppsStep(state, viewModel::toggleGatedApp)
+                        6 -> PinStep(state, viewModel::setPin, viewModel::setPinConfirm)
+                        7 -> ModelDownloadStep()
+                        8 -> DailyGoalStep(state, viewModel::setDailyGoal)
+                        9 -> SimulationStep()
+                        10 -> DoneStep()
                     }
                 }
             }
@@ -533,6 +538,224 @@ private fun DoneStep() {
 }
 
 @Composable
+private fun DeviceCheckStep(state: OnboardingProgress) {
+    val r = state.deviceCheck
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Overline(text = "Cek perangkat")
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Apakah HP-mu sanggup?",
+            style = TextStyle(
+                fontFamily = ShipporiMincho,
+                fontWeight = FontWeight.W600,
+                fontSize = 24.sp,
+                color = SumiBlack,
+            ),
+        )
+        Spacer(Modifier.height(16.dp))
+        if (r == null) {
+            Text("Memeriksa…", style = TextStyle(fontFamily = Manrope, color = SumiMid))
+        } else {
+            CheckRow("Android 12+", "API ${android.os.Build.VERSION.SDK_INT}", r.androidVersionOk)
+            CheckRow("RAM ≥ 8 GB", "${"%.1f".format(r.ramGb)} GB", r.ramOk)
+            CheckRow("Storage ≥ 5 GB free", "${"%.1f".format(r.storageFreeGb)} GB", r.storageOk)
+            CheckRow("ABI arm64-v8a", r.abi, r.abiOk)
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = if (r.allGreen) "Spec sudah cukup buat Gemma 4 E4B."
+                       else "Sebagian belum kompatibel — gate engine + drill tetap jalan, AI tidak.",
+                style = TextStyle(
+                    fontFamily = Manrope,
+                    fontSize = 12.sp,
+                    color = SumiMid,
+                    lineHeight = 18.sp,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CheckRow(label: String, value: String, ok: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontFamily = Manrope,
+                fontWeight = FontWeight.W600,
+                fontSize = 13.sp,
+                color = SumiDark,
+            ),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = value,
+                style = TextStyle(fontFamily = Manrope, fontSize = 12.sp, color = SumiLight),
+            )
+            Text(
+                text = if (ok) "✓" else "✗",
+                style = TextStyle(
+                    fontFamily = Manrope,
+                    fontWeight = FontWeight.W700,
+                    fontSize = 14.sp,
+                    color = if (ok) SuccessMoss else HankoRed,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun GatedAppsStep(state: OnboardingProgress, onToggle: (String) -> Unit) {
+    val candidates = listOf(
+        Triple("com.zhiliaoapp.musically", "TikTok", "🎵"),
+        Triple("com.instagram.android", "Instagram", "📷"),
+        Triple("com.google.android.youtube", "YouTube", "▶️"),
+        Triple("com.twitter.android", "X / Twitter", "𝕏"),
+        Triple("com.shopee.id", "Shopee", "🛒"),
+    )
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Overline(text = "App distraksi")
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Pilih app yang akan di-gate.",
+            style = TextStyle(
+                fontFamily = ShipporiMincho,
+                fontWeight = FontWeight.W600,
+                fontSize = 22.sp,
+                color = SumiBlack,
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Saat kamu buka app ini, kartu kosakata muncul dulu.",
+            style = TextStyle(fontFamily = Manrope, fontSize = 12.sp, color = SumiMid),
+        )
+        Spacer(Modifier.height(16.dp))
+        candidates.forEach { (pkg, name, emoji) ->
+            val checked = pkg in state.gatedApps
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(text = emoji, fontSize = 20.sp)
+                    Text(
+                        text = name,
+                        style = TextStyle(
+                            fontFamily = Manrope,
+                            fontWeight = FontWeight.W600,
+                            fontSize = 14.sp,
+                            color = SumiDark,
+                        ),
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = checked,
+                    onCheckedChange = { onToggle(pkg) },
+                    colors = androidx.compose.material3.SwitchDefaults.colors(
+                        checkedTrackColor = HankoRed,
+                        uncheckedTrackColor = SumiLight.copy(alpha = 0.4f),
+                    ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModelDownloadStep() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Overline(text = "Sensei AI")
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Gemma 4 model — 3.6 GB.",
+            style = TextStyle(
+                fontFamily = ShipporiMincho,
+                fontWeight = FontWeight.W600,
+                fontSize = 24.sp,
+                color = SumiBlack,
+            ),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Sensei chat dan Foto Sensei butuh model on-device. Kita download nanti — buka tab Atur → Sensei AI saat HP terhubung Wi-Fi.",
+            style = TextStyle(
+                fontFamily = Manrope,
+                fontSize = 14.sp,
+                color = SumiMid,
+                lineHeight = 20.sp,
+            ),
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = "Sambil tunggu download, drill kosakata + gate engine sudah bisa jalan.",
+            style = TextStyle(
+                fontFamily = Manrope,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                fontSize = 13.sp,
+                color = SumiLight,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun SimulationStep() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Overline(text = "Simulasi")
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Gate pertama akan muncul saat unlock.",
+            style = TextStyle(
+                fontFamily = ShipporiMincho,
+                fontWeight = FontWeight.W600,
+                fontSize = 22.sp,
+                color = SumiBlack,
+                lineHeight = 30.sp,
+            ),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Setelah onboarding selesai, lock HP lalu unlock — kartu kosakata akan muncul. Jawab tau / lupa untuk dismiss.",
+            style = TextStyle(
+                fontFamily = Manrope,
+                fontSize = 14.sp,
+                color = SumiMid,
+                lineHeight = 20.sp,
+            ),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Kalau terlalu mengganggu, turunkan intensity di tab Atur kapan saja.",
+            style = TextStyle(fontFamily = Manrope, fontSize = 12.sp, color = SumiLight),
+        )
+    }
+}
+
+@Composable
 private fun BottomNavRow(
     state: OnboardingProgress,
     onBack: () -> Unit,
@@ -561,7 +784,7 @@ private fun BottomNavRow(
         }
         val isLast = state.step >= TOTAL_STEPS - 1
         val canAdvance = when (state.step) {
-            2 -> state.preset != null
+            3 -> state.preset != null
             else -> true
         }
         Button(
