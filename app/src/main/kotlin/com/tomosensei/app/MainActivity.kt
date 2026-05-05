@@ -32,6 +32,7 @@ import com.tomosensei.core.designsystem.theme.WashiCream
 import com.tomosensei.feature.chat.ui.ChatScreen
 import com.tomosensei.feature.drill.ui.DrillScreen
 import com.tomosensei.feature.onboarding.ui.OnboardingFlow
+import com.tomosensei.feature.photo.ui.PhotoSenseiScreen
 import com.tomosensei.feature.stats.ui.StatsScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -112,6 +113,7 @@ private fun TomoNavHost(
     ) {
         composable("drill") { DrillScreen() }
         composable("chat") { ChatScreen() }
+        composable("photo") { PhotoSenseiScreen() }
         composable("stats") { StatsScreen() }
         composable("settings") { SettingsScreen() }
     }

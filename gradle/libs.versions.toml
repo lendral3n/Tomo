@@ -25,6 +25,7 @@ mockk = "1.13.13"
 robolectric = "4.13"
 detekt = "1.23.7"
 ktlint-gradle = "12.1.1"
+mediapipe-tasks-genai = "0.10.22"
 
 [libraries]
 # Compose
@@ -76,6 +77,9 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 
 # Crash reporting
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
+
+# AI / On-device inference
+mediapipe-tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "mediapipe-tasks-genai" }
 
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }
