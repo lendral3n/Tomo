@@ -67,6 +67,7 @@ fun SettingsScreen(
 
     var overlayGranted by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var batteryWhitelisted by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
+    var usageStatsGranted by remember { mutableStateOf(hasUsageStatsPermission(context)) }
     var gateEnabled by remember { mutableStateOf(false) }
 
     // Refresh permission state when user returns from system settings.
@@ -74,6 +75,7 @@ fun SettingsScreen(
         if (event == Lifecycle.Event.ON_RESUME) {
             overlayGranted = Settings.canDrawOverlays(context)
             batteryWhitelisted = isIgnoringBatteryOptimizations(context)
+            usageStatsGranted = hasUsageStatsPermission(context)
         }
     }
 
@@ -166,6 +168,12 @@ fun SettingsScreen(
                 subtitle = "Tanpa ini Xiaomi akan membunuh service di background.",
                 granted = batteryWhitelisted,
                 onRequest = { requestBatteryWhitelist(context) },
+            )
+            PermissionTile(
+                title = "Akses statistik penggunaan",
+                subtitle = "Untuk trigger gate saat buka TikTok / IG.",
+                granted = usageStatsGranted,
+                onRequest = { requestUsageStatsPermission(context) },
             )
 
             // Sub-screens
@@ -341,4 +349,21 @@ private fun requestBatteryWhitelist(context: Context) {
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     return pm.isIgnoringBatteryOptimizations(context.packageName)
+}
+
+private fun requestUsageStatsPermission(context: Context) {
+    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { context.startActivity(intent) }
+}
+
+private fun hasUsageStatsPermission(context: Context): Boolean {
+    val ops = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+    @Suppress("DEPRECATION")
+    val mode = ops.checkOpNoThrow(
+        android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+        android.os.Process.myUid(),
+        context.packageName,
+    )
+    return mode == android.app.AppOpsManager.MODE_ALLOWED
 }

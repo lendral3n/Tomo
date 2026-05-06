@@ -25,6 +25,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.tomosensei.core.common.Clock
 import com.tomosensei.core.data.repository.ProgressRepository
+import com.tomosensei.core.data.repository.UserStatsRepository
 import com.tomosensei.core.designsystem.theme.TomoSenseiTheme
 import com.tomosensei.core.srs.FsrsRating
 import com.tomosensei.core.srs.FsrsScheduler
@@ -55,6 +56,7 @@ class GateOverlayService : Service(),
     SavedStateRegistryOwner {
 
     @Inject lateinit var progressRepository: ProgressRepository
+    @Inject lateinit var statsRepository: UserStatsRepository
     @Inject lateinit var fsrsScheduler: FsrsScheduler
     @Inject lateinit var gateEngine: GateEngine
     @Inject lateinit var clock: Clock
@@ -172,6 +174,8 @@ class GateOverlayService : Service(),
             val card = progressRepository.fsrsCard(request.cardId, now)
             val updated = fsrsScheduler.review(card, rating, now)
             progressRepository.saveFsrsCard(updated)
+            statsRepository.recordReview(passed = knew)
+            statsRepository.recordGatePassed()
             gateEngine.logOutcome(
                 request = request,
                 outcome = if (knew) GateEngine.OUTCOME_PASSED else GateEngine.OUTCOME_FAILED,

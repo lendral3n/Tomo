@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 class GateForegroundService : Service() {
 
     @Inject lateinit var gateEngine: GateEngine
+    @Inject lateinit var appLaunchMonitor: AppLaunchMonitor
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val unlockReceiver = UnlockReceiver()
@@ -45,6 +46,7 @@ class GateForegroundService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification())
         registerReceivers()
         startIdleTicker()
+        appLaunchMonitor.start(scope)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -56,6 +58,7 @@ class GateForegroundService : Service() {
             try { unregisterReceiver(unlockReceiver) } catch (_: IllegalArgumentException) {}
             receiverRegistered = false
         }
+        appLaunchMonitor.stop()
         scope.cancel()
         super.onDestroy()
     }
