@@ -29,6 +29,8 @@ include(":feature:stats")
 include(":feature:chat")
 include(":feature:onboarding")
 include(":feature:photo")
+include(":feature:emergency")
+include(":feature:gate-config")
 
 include(":core:ai")
 

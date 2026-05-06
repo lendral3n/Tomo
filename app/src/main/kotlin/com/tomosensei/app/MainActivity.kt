@@ -31,6 +31,8 @@ import com.tomosensei.core.designsystem.theme.TomoSenseiTheme
 import com.tomosensei.core.designsystem.theme.WashiCream
 import com.tomosensei.feature.chat.ui.ChatScreen
 import com.tomosensei.feature.drill.ui.DrillScreen
+import com.tomosensei.feature.emergency.ui.EmergencyPinScreen
+import com.tomosensei.feature.gateconfig.ui.GateConfigScreen
 import com.tomosensei.feature.onboarding.ui.OnboardingFlow
 import com.tomosensei.feature.photo.ui.PhotoSenseiScreen
 import com.tomosensei.feature.stats.ui.StatsScreen
@@ -115,6 +117,15 @@ private fun TomoNavHost(
         composable("chat") { ChatScreen() }
         composable("photo") { PhotoSenseiScreen() }
         composable("stats") { StatsScreen() }
-        composable("settings") { SettingsScreen() }
+        composable("settings") {
+            SettingsScreen(
+                onOpenGateConfig = { navHostController.navigate("gate-config") },
+                onOpenEmergency = { navHostController.navigate("emergency") },
+            )
+        }
+        composable("gate-config") { GateConfigScreen() }
+        composable("emergency") {
+            EmergencyPinScreen(onUnlock = { navHostController.popBackStack() })
+        }
     }
 }

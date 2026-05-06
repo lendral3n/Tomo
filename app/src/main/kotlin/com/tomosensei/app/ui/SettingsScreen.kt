@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,7 +57,11 @@ import com.tomosensei.service.gateengine.GateForegroundService
 import com.tomosensei.service.overlay.GateOverlayService
 
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    onOpenGateConfig: () -> Unit = {},
+    onOpenEmergency: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -163,14 +168,60 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 onRequest = { requestBatteryWhitelist(context) },
             )
 
+            // Sub-screens
+            NavTile(
+                title = "Konfigurasi Gate",
+                subtitle = "Slider 0–6 per trigger.",
+                onClick = onOpenGateConfig,
+            )
+            NavTile(
+                title = "PIN Darurat",
+                subtitle = "Bypass + panggilan darurat.",
+                onClick = onOpenEmergency,
+            )
+
             // Footer info
             Text(
-                text = "v0 — hanya level 3 (Answer to Pass) untuk trigger Unlock.",
+                text = "v0 — Lv 3 default. Trigger lain (app launch, switch) butuh PACKAGE_USAGE_STATS.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = Manrope,
                     color = SumiLight,
                 ),
                 modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun NavTile(title: String, subtitle: String, onClick: () -> Unit) {
+    WashiCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = TextStyle(
+                        fontFamily = Manrope,
+                        fontWeight = FontWeight.W600,
+                        fontSize = 14.sp,
+                        color = SumiDark,
+                    ),
+                )
+                Text(
+                    text = subtitle,
+                    style = TextStyle(fontFamily = Manrope, fontSize = 12.sp, color = SumiMid),
+                )
+            }
+            Text(
+                text = "›",
+                style = TextStyle(fontSize = 22.sp, color = SumiLight),
             )
         }
     }
