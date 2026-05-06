@@ -35,6 +35,10 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
 
+    // HTTP client used by ModelDownloader to stream the 3.6 GB Gemma 4
+    // bundle with progress callbacks + SHA-256 verification.
+    implementation(libs.okhttp)
+
     // MediaPipe Tasks GenAI — wraps the LiteRT-LM runtime that runs
     // Gemma 4 E4B on-device. Confirmed against the patterns in
     // google-ai-edge/gallery; the dep version may need to bump as

@@ -6,6 +6,8 @@ import com.tomosensei.core.ai.GemmaInferenceManager
 import com.tomosensei.core.ai.InferenceChunk
 import com.tomosensei.core.ai.PromptBuilder
 import com.tomosensei.core.common.Clock
+import com.tomosensei.core.data.db.dao.ChatMessageDao
+import com.tomosensei.core.data.db.entity.ChatMessageEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,11 +19,31 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val inferenceManager: GemmaInferenceManager,
+    private val chatDao: ChatMessageDao,
     private val clock: Clock,
 ) : ViewModel() {
 
+    private val sessionId = "default"
     private val _state = MutableStateFlow(ChatUiState())
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            chatDao.observeSession(sessionId).collect { rows ->
+                _state.update { current ->
+                    // Only repopulate if local state is empty (cold load) —
+                    // streaming-in-flight messages live in memory until done.
+                    if (current.messages.isEmpty() || rows.size > current.messages.size) {
+                        current.copy(
+                            messages = rows.map { it.toUi() },
+                        )
+                    } else {
+                        current
+                    }
+                }
+            }
+        }
+    }
 
     fun send(userMessage: String) {
         if (userMessage.isBlank() || _state.value.isStreaming) return
@@ -46,6 +68,14 @@ class ChatViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
+            chatDao.insert(
+                ChatMessageEntity(
+                    sessionId = sessionId,
+                    role = "user",
+                    content = userMsg.text,
+                    timestamp = userMsg.id,
+                ),
+            )
             val prompt = PromptBuilder.chatPrompt(level = "N5", userMessage = userMsg.text)
             val accumulated = StringBuilder()
             inferenceManager.generate(prompt = prompt).collect { chunk ->
@@ -55,8 +85,17 @@ class ChatViewModel @Inject constructor(
                         updateMessage(placeholderId, accumulated.toString(), streaming = true)
                     }
                     is InferenceChunk.Done -> {
-                        updateMessage(placeholderId, chunk.fullText.ifBlank { accumulated.toString() }, streaming = false)
+                        val finalText = chunk.fullText.ifBlank { accumulated.toString() }
+                        updateMessage(placeholderId, finalText, streaming = false)
                         _state.update { it.copy(isStreaming = false) }
+                        chatDao.insert(
+                            ChatMessageEntity(
+                                sessionId = sessionId,
+                                role = "sensei",
+                                content = finalText,
+                                timestamp = clock.nowMillis(),
+                            ),
+                        )
                     }
                     is InferenceChunk.Error -> {
                         updateMessage(placeholderId, "[error] ${chunk.message}", streaming = false)
@@ -66,6 +105,13 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+
+    private fun ChatMessageEntity.toUi(): ChatMessageUi = ChatMessageUi(
+        id = id,
+        role = if (role == "user") ChatRole.User else ChatRole.Sensei,
+        text = content,
+        streaming = false,
+    )
 
     fun onDraftChange(value: String) {
         _state.update { it.copy(draft = value) }
@@ -94,5 +140,6 @@ data class ChatMessageUi(
     val text: String,
     val streaming: Boolean = false,
 )
+
 
 enum class ChatRole { User, Sensei }

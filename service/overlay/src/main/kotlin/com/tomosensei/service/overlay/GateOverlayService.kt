@@ -31,6 +31,7 @@ import com.tomosensei.core.srs.FsrsRating
 import com.tomosensei.core.srs.FsrsScheduler
 import com.tomosensei.service.gateengine.GateEngine
 import com.tomosensei.service.gateengine.GateRequest
+import com.tomosensei.service.gateengine.IntensityLevel
 import com.tomosensei.service.gateengine.fromIntent
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -141,11 +142,29 @@ class GateOverlayService : Service(),
                 TomoSenseiTheme {
                     val current = gateRequestState.value
                     if (current != null) {
-                        AnswerToPassGate(
-                            request = current,
-                            onPassed = { knew -> handleAnswer(current, knew) },
-                            onSkip = { handleSkip(current) },
-                        )
+                        when (current.intensity) {
+                            IntensityLevel.WHISPER -> WhisperGate(
+                                request = current,
+                                onDismiss = { handleSkip(current) },
+                            )
+                            IntensityLevel.TAP_TO_PASS -> TapToPassGate(
+                                request = current,
+                                onPass = { handleSkip(current) },
+                            )
+                            IntensityLevel.CORRECT_TO_PASS -> CorrectToPassGate(
+                                request = current,
+                                distractors = listOf("buku", "minum", "pergi"),
+                                onResult = { passed, attempts ->
+                                    handleAnswerWithAttempts(current, passed, attempts)
+                                },
+                            )
+                            // Lv 5/6 not yet implemented — fall back to Lv 3.
+                            else -> AnswerToPassGate(
+                                request = current,
+                                onPassed = { knew -> handleAnswer(current, knew) },
+                                onSkip = { handleSkip(current) },
+                            )
+                        }
                     }
                 }
             }
@@ -193,6 +212,29 @@ class GateOverlayService : Service(),
                 outcome = GateEngine.OUTCOME_SKIPPED,
                 attemptsToPass = 0,
                 timeToPassMs = clock.nowMillis() - request.triggeredAt,
+            )
+        }
+        removeOverlay()
+    }
+
+    private fun handleAnswerWithAttempts(
+        request: GateRequest,
+        passed: Boolean,
+        attempts: Int,
+    ) {
+        val now = clock.nowMillis()
+        scope.launch(Dispatchers.IO) {
+            val rating = if (passed) FsrsRating.GOOD else FsrsRating.AGAIN
+            val card = progressRepository.fsrsCard(request.cardId, now)
+            val updated = fsrsScheduler.review(card, rating, now)
+            progressRepository.saveFsrsCard(updated)
+            statsRepository.recordReview(passed = passed)
+            if (passed) statsRepository.recordGatePassed()
+            gateEngine.logOutcome(
+                request = request,
+                outcome = if (passed) GateEngine.OUTCOME_PASSED else GateEngine.OUTCOME_FAILED,
+                attemptsToPass = attempts,
+                timeToPassMs = now - request.triggeredAt,
             )
         }
         removeOverlay()

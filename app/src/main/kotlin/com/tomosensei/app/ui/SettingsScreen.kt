@@ -60,6 +60,7 @@ import com.tomosensei.service.overlay.GateOverlayService
 fun SettingsScreen(
     onOpenGateConfig: () -> Unit = {},
     onOpenEmergency: () -> Unit = {},
+    onOpenModelDownload: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -186,6 +187,11 @@ fun SettingsScreen(
                 title = "PIN Darurat",
                 subtitle = "Bypass + panggilan darurat.",
                 onClick = onOpenEmergency,
+            )
+            NavTile(
+                title = "Sensei AI Model",
+                subtitle = "Download Gemma 4 (3.6 GB).",
+                onClick = onOpenModelDownload,
             )
 
             // Footer info

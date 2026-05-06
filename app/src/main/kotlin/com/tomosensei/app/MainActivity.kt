@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.tomosensei.app.ui.ModelDownloadScreen
 import com.tomosensei.app.ui.SettingsScreen
 import com.tomosensei.core.designsystem.components.BottomTomoNav
 import com.tomosensei.core.designsystem.components.DefaultTomoNav
@@ -121,11 +122,15 @@ private fun TomoNavHost(
             SettingsScreen(
                 onOpenGateConfig = { navHostController.navigate("gate-config") },
                 onOpenEmergency = { navHostController.navigate("emergency") },
+                onOpenModelDownload = { navHostController.navigate("model-download") },
             )
         }
         composable("gate-config") { GateConfigScreen() }
         composable("emergency") {
             EmergencyPinScreen(onUnlock = { navHostController.popBackStack() })
+        }
+        composable("model-download") {
+            ModelDownloadScreen(onBack = { navHostController.popBackStack() })
         }
     }
 }
