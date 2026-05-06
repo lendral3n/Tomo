@@ -81,6 +81,8 @@ dependencies {
     implementation(project(":service:gate-engine"))
     implementation(project(":service:overlay"))
 
+    implementation(project(":core:ai"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)

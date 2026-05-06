@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.tomosensei.app.ui.ModelDownloadScreen
 import com.tomosensei.app.ui.SettingsScreen
 import com.tomosensei.core.designsystem.components.BottomTomoNav
 import com.tomosensei.core.designsystem.components.DefaultTomoNav
@@ -31,6 +32,8 @@ import com.tomosensei.core.designsystem.theme.TomoSenseiTheme
 import com.tomosensei.core.designsystem.theme.WashiCream
 import com.tomosensei.feature.chat.ui.ChatScreen
 import com.tomosensei.feature.drill.ui.DrillScreen
+import com.tomosensei.feature.emergency.ui.EmergencyPinScreen
+import com.tomosensei.feature.gateconfig.ui.GateConfigScreen
 import com.tomosensei.feature.onboarding.ui.OnboardingFlow
 import com.tomosensei.feature.photo.ui.PhotoSenseiScreen
 import com.tomosensei.feature.stats.ui.StatsScreen
@@ -115,6 +118,19 @@ private fun TomoNavHost(
         composable("chat") { ChatScreen() }
         composable("photo") { PhotoSenseiScreen() }
         composable("stats") { StatsScreen() }
-        composable("settings") { SettingsScreen() }
+        composable("settings") {
+            SettingsScreen(
+                onOpenGateConfig = { navHostController.navigate("gate-config") },
+                onOpenEmergency = { navHostController.navigate("emergency") },
+                onOpenModelDownload = { navHostController.navigate("model-download") },
+            )
+        }
+        composable("gate-config") { GateConfigScreen() }
+        composable("emergency") {
+            EmergencyPinScreen(onUnlock = { navHostController.popBackStack() })
+        }
+        composable("model-download") {
+            ModelDownloadScreen(onBack = { navHostController.popBackStack() })
+        }
     }
 }

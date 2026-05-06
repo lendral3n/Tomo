@@ -5,6 +5,7 @@ import android.content.Intent
 import com.tomosensei.core.common.Clock
 import com.tomosensei.core.data.db.entity.GateLogEntity
 import com.tomosensei.core.data.db.dao.GateLogDao
+import com.tomosensei.core.data.db.dao.TriggerConfigDao
 import com.tomosensei.core.data.repository.CardRepository
 import com.tomosensei.core.data.repository.ProgressRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,19 +35,23 @@ class GateEngine @Inject constructor(
     private val cardRepository: CardRepository,
     private val progressRepository: ProgressRepository,
     private val gateLogDao: GateLogDao,
+    private val triggerConfigDao: TriggerConfigDao,
     private val cooldown: CooldownTracker,
     private val clock: Clock,
 ) {
 
     /**
      * Returns an Intent to start [GATE_OVERLAY_ACTION] with extras populated,
-     * or null if the trigger was suppressed (cooldown / no due card).
+     * or null if the trigger was suppressed (cooldown / disabled / no due
+     * card). Intensity + cooldown come from [TriggerConfigDao] when the user
+     * has configured the trigger; otherwise falls back to spec defaults.
      */
-    suspend fun handleTrigger(
-        trigger: Trigger,
-        cooldownSeconds: Int = DEFAULT_COOLDOWN_SECONDS,
-        intensity: IntensityLevel = IntensityLevel.ANSWER_TO_PASS,
-    ): Intent? {
+    suspend fun handleTrigger(trigger: Trigger): Intent? {
+        val config = triggerConfigDao.get(trigger.key)
+        val enabled = config?.enabled ?: true
+        if (!enabled) return null
+        val intensity = IntensityLevel.fromValue(config?.intensity ?: IntensityLevel.ANSWER_TO_PASS.value)
+        val cooldownSeconds = config?.cooldownSeconds ?: DEFAULT_COOLDOWN_SECONDS
         if (!cooldown.isPast(trigger, cooldownSeconds)) return null
 
         val now = clock.nowMillis()

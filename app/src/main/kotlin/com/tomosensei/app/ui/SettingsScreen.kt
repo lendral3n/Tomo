@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,12 +57,18 @@ import com.tomosensei.service.gateengine.GateForegroundService
 import com.tomosensei.service.overlay.GateOverlayService
 
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    onOpenGateConfig: () -> Unit = {},
+    onOpenEmergency: () -> Unit = {},
+    onOpenModelDownload: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var overlayGranted by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var batteryWhitelisted by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
+    var usageStatsGranted by remember { mutableStateOf(hasUsageStatsPermission(context)) }
     var gateEnabled by remember { mutableStateOf(false) }
 
     // Refresh permission state when user returns from system settings.
@@ -69,6 +76,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         if (event == Lifecycle.Event.ON_RESUME) {
             overlayGranted = Settings.canDrawOverlays(context)
             batteryWhitelisted = isIgnoringBatteryOptimizations(context)
+            usageStatsGranted = hasUsageStatsPermission(context)
         }
     }
 
@@ -162,15 +170,72 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 granted = batteryWhitelisted,
                 onRequest = { requestBatteryWhitelist(context) },
             )
+            PermissionTile(
+                title = "Akses statistik penggunaan",
+                subtitle = "Untuk trigger gate saat buka TikTok / IG.",
+                granted = usageStatsGranted,
+                onRequest = { requestUsageStatsPermission(context) },
+            )
+
+            // Sub-screens
+            NavTile(
+                title = "Konfigurasi Gate",
+                subtitle = "Slider 0–6 per trigger.",
+                onClick = onOpenGateConfig,
+            )
+            NavTile(
+                title = "PIN Darurat",
+                subtitle = "Bypass + panggilan darurat.",
+                onClick = onOpenEmergency,
+            )
+            NavTile(
+                title = "Sensei AI Model",
+                subtitle = "Download Gemma 4 (3.6 GB).",
+                onClick = onOpenModelDownload,
+            )
 
             // Footer info
             Text(
-                text = "v0 — hanya level 3 (Answer to Pass) untuk trigger Unlock.",
+                text = "v0 — Lv 3 default. Trigger lain (app launch, switch) butuh PACKAGE_USAGE_STATS.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = Manrope,
                     color = SumiLight,
                 ),
                 modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun NavTile(title: String, subtitle: String, onClick: () -> Unit) {
+    WashiCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = TextStyle(
+                        fontFamily = Manrope,
+                        fontWeight = FontWeight.W600,
+                        fontSize = 14.sp,
+                        color = SumiDark,
+                    ),
+                )
+                Text(
+                    text = subtitle,
+                    style = TextStyle(fontFamily = Manrope, fontSize = 12.sp, color = SumiMid),
+                )
+            }
+            Text(
+                text = "›",
+                style = TextStyle(fontSize = 22.sp, color = SumiLight),
             )
         }
     }
@@ -290,4 +355,21 @@ private fun requestBatteryWhitelist(context: Context) {
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     return pm.isIgnoringBatteryOptimizations(context.packageName)
+}
+
+private fun requestUsageStatsPermission(context: Context) {
+    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { context.startActivity(intent) }
+}
+
+private fun hasUsageStatsPermission(context: Context): Boolean {
+    val ops = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+    @Suppress("DEPRECATION")
+    val mode = ops.checkOpNoThrow(
+        android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+        android.os.Process.myUid(),
+        context.packageName,
+    )
+    return mode == android.app.AppOpsManager.MODE_ALLOWED
 }

@@ -55,6 +55,7 @@ class DrillViewModel @Inject constructor(
             val fsrs = progressRepository.fsrsCard(current.current.id, now)
             val updated = scheduler.review(fsrs, rating, now)
             progressRepository.saveFsrsCard(updated)
+            statsRepository.recordReview(passed = knew)
             advanceQueue()
         }
     }
