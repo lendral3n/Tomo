@@ -55,5 +55,11 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
+    // ProcessCameraProvider.getInstance() returns Guava's ListenableFuture,
+    // which lives in com.google.common.util.concurrent. CameraX pulls it
+    // in transitively at runtime but the Kotlin compile classpath needs
+    // it declared explicitly.
+    implementation(libs.guava)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
