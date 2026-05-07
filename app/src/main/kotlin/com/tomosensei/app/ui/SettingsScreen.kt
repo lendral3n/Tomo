@@ -39,8 +39,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tomosensei.app.ResetState
+import com.tomosensei.app.SettingsViewModel
 import com.tomosensei.core.designsystem.components.Overline
 import com.tomosensei.core.designsystem.components.WashiBackground
 import com.tomosensei.core.designsystem.components.WashiCard
@@ -62,9 +66,11 @@ fun SettingsScreen(
     onOpenEmergency: () -> Unit = {},
     onOpenModelDownload: () -> Unit = {},
     modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val resetState by viewModel.resetState.collectAsStateWithLifecycle()
 
     var overlayGranted by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var batteryWhitelisted by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
@@ -193,6 +199,44 @@ fun SettingsScreen(
                 subtitle = "Download Gemma 4 (3.6 GB).",
                 onClick = onOpenModelDownload,
             )
+
+            // Danger zone: reset progress
+            WashiCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Overline(text = "Reset", color = HankoRed)
+                    Text(
+                        text = if (resetState == ResetState.Done) "Progress sudah di-reset."
+                               else "Hapus FSRS state, gate log, dan chat history. Kartu N5 + preferensi tetap.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = Manrope,
+                            color = SumiMid,
+                        ),
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Button(
+                        onClick = viewModel::resetProgress,
+                        shape = CircleShape,
+                        enabled = resetState != ResetState.Working,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = HankoRed,
+                            contentColor = WashiCreamLight,
+                            disabledContainerColor = SumiLight.copy(alpha = 0.3f),
+                        ),
+                    ) {
+                        Text(
+                            text = when (resetState) {
+                                ResetState.Idle -> "Reset progress"
+                                ResetState.Working -> "Menghapus…"
+                                ResetState.Done -> "Selesai (tap untuk ulang)"
+                            },
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontFamily = Manrope,
+                                fontWeight = FontWeight.W600,
+                            ),
+                        )
+                    }
+                }
+            }
 
             // Footer info
             Text(

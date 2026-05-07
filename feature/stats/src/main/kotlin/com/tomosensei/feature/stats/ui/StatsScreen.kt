@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +38,11 @@ import com.tomosensei.core.designsystem.theme.Manrope
 import com.tomosensei.core.designsystem.theme.ShipporiMincho
 import com.tomosensei.core.designsystem.theme.SumiBlack
 import com.tomosensei.core.designsystem.theme.SumiLight
+import com.tomosensei.core.designsystem.theme.SuccessMoss
 import com.tomosensei.core.designsystem.theme.SumiMid
+import com.tomosensei.core.designsystem.theme.ZenKakuGothic
+import com.tomosensei.core.data.db.dao.WeakCard
+import com.tomosensei.feature.stats.MasteryUiState
 import com.tomosensei.feature.stats.StatsUiState
 import com.tomosensei.feature.stats.StatsViewModel
 
@@ -45,6 +52,8 @@ fun StatsScreen(
     viewModel: StatsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val mastery by viewModel.mastery.collectAsStateWithLifecycle()
+    val weakCards by viewModel.weakCards.collectAsStateWithLifecycle()
     WashiBackground(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -59,13 +68,120 @@ fun StatsScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 StreakHero(state = state)
+                MasteryCard(mastery = mastery)
                 StatsGrid(state = state)
                 Column {
                     SectionHeader(label = "Vocab Sering Lupa")
                     Spacer(Modifier.height(12.dp))
-                    Placeholder(text = "Belum ada data — mulai drill dulu.")
+                    if (weakCards.isEmpty()) {
+                        Placeholder(text = "Belum ada lapse. Drill dulu, baru kelihatan.")
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            weakCards.forEach { wc -> WeakCardRow(wc) }
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MasteryCard(mastery: MasteryUiState) {
+    WashiCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Overline(text = "Mastery N5")
+                Text(
+                    text = "${mastery.masteredCount} / ${mastery.totalCards}",
+                    style = TextStyle(
+                        fontFamily = JetBrainsMono,
+                        fontWeight = FontWeight.W600,
+                        fontSize = 12.sp,
+                        color = SumiMid,
+                    ),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+            ) {
+                LinearProgressIndicator(
+                    progress = { mastery.fraction },
+                    modifier = Modifier.fillMaxSize(),
+                    color = SuccessMoss,
+                    trackColor = SumiLight.copy(alpha = 0.18f),
+                )
+            }
+            Text(
+                text = "${(mastery.fraction * 100).toInt()}% kartu sudah masuk fase review.",
+                style = TextStyle(
+                    fontFamily = Manrope,
+                    fontSize = 12.sp,
+                    color = SumiMid,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeakCardRow(wc: WeakCard) {
+    WashiCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = wc.card.front,
+                        style = TextStyle(
+                            fontFamily = ShipporiMincho,
+                            fontWeight = FontWeight.W600,
+                            fontSize = 18.sp,
+                            color = SumiBlack,
+                        ),
+                    )
+                    if (wc.card.reading.isNotBlank()) {
+                        Text(
+                            text = wc.card.reading,
+                            style = TextStyle(
+                                fontFamily = ZenKakuGothic,
+                                fontSize = 11.sp,
+                                color = SumiLight,
+                            ),
+                        )
+                    }
+                }
+                Text(
+                    text = wc.card.meaning,
+                    style = TextStyle(
+                        fontFamily = Manrope,
+                        fontSize = 12.sp,
+                        color = SumiMid,
+                    ),
+                )
+            }
+            Text(
+                text = "${wc.lapses}× lapse",
+                style = TextStyle(
+                    fontFamily = JetBrainsMono,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 11.sp,
+                    color = HankoRed,
+                ),
+            )
         }
     }
 }

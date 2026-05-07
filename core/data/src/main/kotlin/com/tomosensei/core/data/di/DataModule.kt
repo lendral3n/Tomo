@@ -3,6 +3,7 @@ package com.tomosensei.core.data.di
 import android.content.Context
 import com.tomosensei.core.data.db.DatabaseFactory
 import com.tomosensei.core.data.db.TomoSenseiDatabase
+import com.tomosensei.core.data.db.dao.AnalyticsDao
 import com.tomosensei.core.data.db.dao.CardDao
 import com.tomosensei.core.data.db.dao.CardProgressDao
 import com.tomosensei.core.data.db.dao.ChatMessageDao
@@ -34,4 +35,5 @@ object DataModule {
     @Provides fun provideUserStatsDao(db: TomoSenseiDatabase): UserStatsDao = db.userStatsDao()
     @Provides fun provideSettingsDao(db: TomoSenseiDatabase): SettingsDao = db.settingsDao()
     @Provides fun provideChatMessageDao(db: TomoSenseiDatabase): ChatMessageDao = db.chatMessageDao()
+    @Provides fun provideAnalyticsDao(db: TomoSenseiDatabase): AnalyticsDao = db.analyticsDao()
 }
