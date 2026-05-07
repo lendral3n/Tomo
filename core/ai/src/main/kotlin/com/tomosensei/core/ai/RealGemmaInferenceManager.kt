@@ -3,7 +3,6 @@ package com.tomosensei.core.ai
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,9 +31,12 @@ import kotlinx.coroutines.withContext
  *    per [generate] call and closed when the flow terminates. The
  *    underlying [LlmInference] is reused across calls.
  *
- * NOTE: API surface tracks google-ai-edge/gallery as of mid-2026. If a
- * library update changes the signatures, swap them here without
- * touching call sites — [GemmaInferenceManager] is the stable boundary.
+ * Multi-modal note (Phase 4.1): MediaPipe Tasks GenAI 0.10.22 ships a
+ * text-only [LlmInferenceSession.Builder]. The vision-capable variant
+ * (setMaxNumImages + session.addImage + BitmapImageBuilder) lands in a
+ * later artifact split — `tasks-genai-vision` once Google promotes it
+ * to stable. For now we accept the [Bitmap] parameter but log + drop
+ * it; Foto Sensei keeps working via the stub fallback until then.
  */
 @Singleton
 class RealGemmaInferenceManager @Inject constructor(
@@ -61,7 +63,6 @@ class RealGemmaInferenceManager @Inject constructor(
                 val options = LlmInference.LlmInferenceOptions.builder()
                     .setModelPath(modelDownloader.targetFile().absolutePath)
                     .setMaxTokens(MAX_TOKENS)
-                    .setMaxNumImages(1)
                     .build()
                 llmInference = LlmInference.createFromOptions(context, options)
             }
@@ -84,6 +85,11 @@ class RealGemmaInferenceManager @Inject constructor(
             close()
             return@callbackFlow
         }
+        if (image != null) {
+            // Vision path requires tasks-genai-vision (Phase 4.1) — until
+            // we depend on it, drop the bitmap and continue with text.
+            Log.w(TAG, "Image input ignored: tasks-genai-vision not wired yet")
+        }
 
         val session = runCatching {
             LlmInferenceSession.createFromOptions(
@@ -102,9 +108,6 @@ class RealGemmaInferenceManager @Inject constructor(
 
         runCatching {
             session.addQueryChunk(prompt)
-            image?.let { bitmap ->
-                session.addImage(BitmapImageBuilder(bitmap).build())
-            }
             val accumulated = StringBuilder()
             session.generateResponseAsync { partial, done ->
                 if (partial != null) {
