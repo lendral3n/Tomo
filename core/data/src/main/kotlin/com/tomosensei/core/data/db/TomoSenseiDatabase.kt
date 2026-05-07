@@ -2,6 +2,7 @@ package com.tomosensei.core.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.tomosensei.core.data.db.dao.AnalyticsDao
 import com.tomosensei.core.data.db.dao.CardDao
 import com.tomosensei.core.data.db.dao.CardProgressDao
 import com.tomosensei.core.data.db.dao.ChatMessageDao
@@ -42,6 +43,7 @@ abstract class TomoSenseiDatabase : RoomDatabase() {
     abstract fun userStatsDao(): UserStatsDao
     abstract fun settingsDao(): SettingsDao
     abstract fun chatMessageDao(): ChatMessageDao
+    abstract fun analyticsDao(): AnalyticsDao
 
     companion object {
         const val DATABASE_NAME = "tomo_sensei.db"

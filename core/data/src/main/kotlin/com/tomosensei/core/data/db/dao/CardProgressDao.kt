@@ -18,6 +18,12 @@ interface CardProgressDao {
     @Query("SELECT * FROM progress WHERE due <= :now ORDER BY due ASC LIMIT 1")
     suspend fun nextDue(now: Long): CardProgressEntity?
 
+    @Query("SELECT COUNT(*) FROM progress WHERE state = 2")
+    suspend fun countMastered(): Int
+
+    @Query("SELECT COUNT(*) FROM progress")
+    suspend fun countWithProgress(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(progress: CardProgressEntity)
 

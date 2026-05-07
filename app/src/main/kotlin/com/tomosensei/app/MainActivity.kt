@@ -24,6 +24,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.tomosensei.app.ui.ModelDownloadScreen
 import com.tomosensei.app.ui.SettingsScreen
+import com.tomosensei.app.ui.TomoSplash
 import com.tomosensei.core.designsystem.components.BottomTomoNav
 import com.tomosensei.core.designsystem.components.DefaultTomoNav
 import com.tomosensei.core.designsystem.components.TomoNavItem
@@ -60,13 +61,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppShell(viewModel: AppShellViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    when (state) {
-        AppShellState.Loading -> Box(
+    var splashDone by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    when {
+        !splashDone -> TomoSplash(onTimeout = { splashDone = true })
+        state == AppShellState.Loading -> Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) { CircularProgressIndicator(color = HankoRed) }
-        AppShellState.Onboarding -> OnboardingFlow(onComplete = { /* state observer flips */ })
-        AppShellState.MainApp -> TomoSenseiAppRoot()
+        state == AppShellState.Onboarding -> OnboardingFlow(onComplete = { /* state observer flips */ })
+        state == AppShellState.MainApp -> TomoSenseiAppRoot()
     }
 }
 
